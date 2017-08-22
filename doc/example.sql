@@ -1,7 +1,7 @@
 ﻿
 CREATE EXTENSION postgis;
 
-CREATE EXTENSION postgis-t;
+CREATE EXTENSION postgist;
 
 /*
 **********************
