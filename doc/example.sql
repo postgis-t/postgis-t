@@ -1,4 +1,8 @@
 ﻿
+CREATE EXTENSION postgis;
+
+CREATE EXTENSION postgis-t;
+
 /*
 **********************
 	USAGE
