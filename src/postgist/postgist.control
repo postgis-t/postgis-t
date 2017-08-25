@@ -1,0 +1,7 @@
+# postgis-t extension
+# which will be installed into prefix/share/extension
+
+comment = 'postgist datatype'
+default_version = '0.03.26'
+relocatable = true
+requires = postgis
