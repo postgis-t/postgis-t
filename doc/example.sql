@@ -5,7 +5,7 @@ CREATE EXTENSION postgist;
 
 /*
 **********************
-	USAGE
+    USAGE
 **********************
 */
 

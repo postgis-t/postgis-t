@@ -5,25 +5,22 @@
 
 
 /* 
-TYPE DEFINITION:
-	TIMESERIES_ELEM
-	- This is the type of each TIMESERIES array element.
-	TIMESERIES
-	- Beyond array elements, this type stores the convex hull, 
-	  the time period and values range of observations.
-	  These fields can be useful for indexing.
-*/
+  TYPE DEFINITION:
+    * TIMESERIES_ELEM: this is the type of each TIMESERIES array element.
+    * TIMESERIES: beyond array elements, this type stores the convex hull, 
+                  the time period and values range of observations.
+                  These fields can be useful for indexing.
+ */
 
---DROP TYPE TIMESERIES_ELEM;
-CREATE TYPE TIMESERIES_ELEM 
-AS(
-  value    NUMERIC,
-  time     TIMESTAMP
+CREATE TYPE TIMESERIES_ELEM AS
+(
+  value  NUMERIC,
+  time   TIMESTAMP
 );
 
---DROP TYPE TIMESERIES;
-CREATE TYPE TIMESERIES 
-AS(
+
+CREATE TYPE TIMESERIES AS
+(
   hull         GEOMETRY,
   period       TSRANGE,
   range        NUMRANGE,
@@ -31,25 +28,22 @@ AS(
 );
 
 /* 
-TYPE DEFINITION:
-	TRAJECTORY_ELEM
-	- This is the type of each TRAJECTORY array element.
-	TRAJECTORY
-	- Beyond array elements, this type stores the convex hull and 
-	  the time period of observations.
-	  These fields can be useful for indexing.
-*/
+  TYPE DEFINITION:
+    * TRAJECTORY_ELEM: this is the type of each TRAJECTORY array element.
+    * TRAJECTORY: beyond array elements, this type stores the convex hull and 
+                  the time period of observations.
+                  These fields can be useful for indexing.
+ */
 
---DROP TYPE TRAJECTORY_ELEM;
-CREATE TYPE TRAJECTORY_ELEM 
-AS(
+CREATE TYPE TRAJECTORY_ELEM AS
+(
   geom          GEOMETRY,
   time          TIMESTAMP
 );
 
---DROP TYPE TRAJECTORY;
-CREATE TYPE TRAJECTORY 
-AS(
+
+CREATE TYPE TRAJECTORY AS
+(
   hull         GEOMETRY,
   period       TSRANGE,
   data         TRAJECTORY_ELEM[]
@@ -57,19 +51,19 @@ AS(
 
 
 /*
-AGGREGATE FUNCTION:
-	_TST_PERIOD_AGG_STATE(TSRANGE, TIMESTAMP)
-	_TST_PERIOD_AGG(TIMESTAMP)
-	- These two functions are internal. Toghether, they defines
-	  an aggregate function over TIMESTAMPS and returns a time range.
-	  
-	_TST_RANGE_AGG_STATE(NUMRANGE, NUMERIC)
-	_TST_RANGE_AGG(TIMESTAMP)
-	- These two functions are internal. Toghether, they defines
-	  an aggregate function over NUMERIC and returns a numeric range.
+  AGGREGATE FUNCTION:
+  _TST_PERIOD_AGG_STATE(TSRANGE, TIMESTAMP)
+  _TST_PERIOD_AGG(TIMESTAMP)
+  - These two functions are internal. Toghether, they defines
+    an aggregate function over TIMESTAMPS and returns a time range.
+    
+  _TST_RANGE_AGG_STATE(NUMRANGE, NUMERIC)
+  _TST_RANGE_AGG(TIMESTAMP)
+  - These two functions are internal. Toghether, they defines
+    an aggregate function over NUMERIC and returns a numeric range.
 */
 
---DROP FUNCTION _tst_period_agg_state(TSRANGE, TIMESTAMP);
+-- A state transition function over timestamp
 CREATE OR REPLACE FUNCTION _tst_period_agg_state(TSRANGE, TIMESTAMP)
 RETURNS TSRANGE
 AS
@@ -81,13 +75,13 @@ $$
 $$
 LANGUAGE SQL;
 
---DROP AGGREGATE _tst_period_agg(TIMESTAMP);
+
 CREATE AGGREGATE _tst_period_agg(TIMESTAMP)(
   SFUNC = _tst_period_agg_state,
   STYPE = TSRANGE
 );
 
---DROP FUNCTION _tst_range_agg_state(NUMRANGE, NUMERIC);
+
 CREATE OR REPLACE FUNCTION _tst_range_agg_state(NUMRANGE, NUMERIC)
 RETURNS NUMRANGE
 AS
@@ -99,7 +93,7 @@ $$
 $$
 LANGUAGE SQL;
 
---DROP AGGREGATE _tst_range_agg(NUMERIC);
+
 CREATE AGGREGATE _tst_range_agg(NUMERIC)(
   SFUNC = _tst_range_agg_state,
   STYPE = NUMRANGE
@@ -108,19 +102,20 @@ CREATE AGGREGATE _tst_range_agg(NUMERIC)(
 
 /*
 AGGREGATE FUNCTION:
-	_TST_TIMESERIES_STATE(TIMESERIES, NUMERIC, TIMESTAMP, GEOMETRY)
-	_TST_TIMESERIES_FINAL(TIMESERIES)
-	- These two functions provide aggregation calculations for TST_TIMESERIES.
-	TST_TIMESERIES(NUMERIC, TIMESTAMP, GEOMETRY)
-	- This aggregate function wrapps (NUMERIC, TIMESTAMP, GEOMETRY) occurences into a 
-	  TIMESERIES datatype.
-	  Example:
-		SELECT buoy_id, tst_timeseries((|/(zonal_vel ^ 2 + merid_vel ^ 2))::NUMERIC, time, geom)
-		FROM buoy_obs
-		GROUP BY buoy_id;
+  _TST_TIMESERIES_STATE(TIMESERIES, NUMERIC, TIMESTAMP, GEOMETRY)
+  _TST_TIMESERIES_FINAL(TIMESERIES)
+  - These two functions provide aggregation calculations for TST_TIMESERIES.
+  TST_TIMESERIES(NUMERIC, TIMESTAMP, GEOMETRY)
+  - This aggregate function wrapps (NUMERIC, TIMESTAMP, GEOMETRY) occurences into a 
+    TIMESERIES datatype.
+    Example:
+    SELECT buoy_id, tst_timeseries((|/(zonal_vel ^ 2 + merid_vel ^ 2))::NUMERIC, time, geom)
+    FROM buoy_obs
+    GROUP BY buoy_id;
 */
 
---DROP FUNCTION _tst_timeseries_state(TIMESERIES, NUMERIC, TIMESTAMP, GEOMETRY);
+
+-- A state transition function over a time series
 CREATE OR REPLACE FUNCTION _tst_timeseries_state(TIMESERIES, NUMERIC, TIMESTAMP, GEOMETRY)
 RETURNS TIMESERIES
 AS
@@ -130,7 +125,6 @@ $$
 LANGUAGE SQL;
 
 
---DROP FUNCTION _tst_timeseries_final(TIMESERIES);
 CREATE OR REPLACE FUNCTION _tst_timeseries_final(TIMESERIES)
 RETURNS TIMESERIES
 AS
@@ -149,7 +143,7 @@ $$
 LANGUAGE SQL;
 
 
---DROP AGGREGATE tst_timeseries(NUMERIC, TIMESTAMP, GEOMETRY);
+
 CREATE AGGREGATE tst_timeseries(NUMERIC, TIMESTAMP, GEOMETRY) (
   SFUNC = _tst_timeseries_state,
   STYPE = TIMESERIES,
@@ -160,15 +154,15 @@ CREATE AGGREGATE tst_timeseries(NUMERIC, TIMESTAMP, GEOMETRY) (
 
 /*
 AGGREGATE FUNCTION:
-	_TST_TRAJECTORY_STATE(TRAJECTORY, GEOMETRY, TIMESTAMP)
-	_TST_TRAJECTORY_FINAL(TRAJECTORY)
-	- These two functions provide aggregation calculations for TST_TRAJECTORY.
-	TST_TRAJECTORY(GEOMETRY, TIMESTAMP)
-	- This aggregate function wrapps (GEOMETRY, TIMESTAMP) occurences into a trajectory
-	  Example:
-		SELECT buoy_id, tst_trajectory(geom, time)
-		FROM buoy_obs
-		GROUP BY buoy_id;
+  _TST_TRAJECTORY_STATE(TRAJECTORY, GEOMETRY, TIMESTAMP)
+  _TST_TRAJECTORY_FINAL(TRAJECTORY)
+  - These two functions provide aggregation calculations for TST_TRAJECTORY.
+  TST_TRAJECTORY(GEOMETRY, TIMESTAMP)
+  - This aggregate function wrapps (GEOMETRY, TIMESTAMP) occurences into a trajectory
+    Example:
+    SELECT buoy_id, tst_trajectory(geom, time)
+    FROM buoy_obs
+    GROUP BY buoy_id;
 
 */
 
@@ -181,7 +175,7 @@ $$
 $$
 LANGUAGE SQL;
 
---DROP FUNCTION _tst_trajectory_final(TRAJECTORY);
+
 CREATE OR REPLACE FUNCTION _tst_trajectory_final(TRAJECTORY)
 RETURNS TRAJECTORY
 AS
@@ -199,7 +193,7 @@ $$
 LANGUAGE SQL;
 
 
---DROP AGGREGATE tst_trajectory(GEOMETRY, TIMESTAMP);
+
 CREATE AGGREGATE tst_trajectory(GEOMETRY, TIMESTAMP) (
   SFUNC = _tst_trajectory_state,
   STYPE = TRAJECTORY,
@@ -210,10 +204,10 @@ CREATE AGGREGATE tst_trajectory(GEOMETRY, TIMESTAMP) (
 
 /*
 FUNCTION:
-	TST_HULL(TIMESERIES | TRAJECTORY)
-	- This overloaded function returns the hull GEOMETRY from a TIMESERIES or a TRAJECTORY.
+  TST_HULL(TIMESERIES | TRAJECTORY)
+  - This overloaded function returns the hull GEOMETRY from a TIMESERIES or a TRAJECTORY.
 */
---DROP FUNCTION TST_HULL(TIMESERIES);
+
 CREATE OR REPLACE FUNCTION tst_hull(TIMESERIES)
 RETURNS GEOMETRY
 AS
@@ -235,8 +229,8 @@ LANGUAGE SQL;
 
 /*
 FUNCTION:
-	TST_PERIOD(TIMESERIES | TRAJECTORY)
-	- This overloaded function returns the period TSRANGE from a TIMESERIES or a TRAJECTORY.
+  TST_PERIOD(TIMESERIES | TRAJECTORY)
+  - This overloaded function returns the period TSRANGE from a TIMESERIES or a TRAJECTORY.
 */
 --DROP FUNCTION TST_HULL(TIMESERIES);
 CREATE OR REPLACE FUNCTION tst_period(TIMESERIES)
@@ -259,8 +253,8 @@ LANGUAGE SQL;
 
 /*
 FUNCTION:
-	TST_RANGE(TIMESERIES)
-	- This function returns the range NUMRANGE from a TIMESERIES.
+  TST_RANGE(TIMESERIES)
+  - This function returns the range NUMRANGE from a TIMESERIES.
 */
 --DROP FUNCTION TST_HULL(TIMESERIES);
 CREATE OR REPLACE FUNCTION tst_range(TIMESERIES)
@@ -274,8 +268,8 @@ LANGUAGE SQL;
 
 /*
 FUNCTION:
-	TST_DATA(TIMESERIES | TRAJECTORY)
-	- This overloaded function returns the period TSRANGE from a TIMESERIES or a TRAJECTORY.
+  TST_DATA(TIMESERIES | TRAJECTORY)
+  - This overloaded function returns the period TSRANGE from a TIMESERIES or a TRAJECTORY.
 */
 --DROP FUNCTION TST_DATA(TIMESERIES);
 CREATE OR REPLACE FUNCTION tst_data(TIMESERIES)
@@ -298,12 +292,12 @@ LANGUAGE SQL;
 
 /*
 FUNCTION:
-	_TST_INTERSECTS(TIMESERIES, TIMESERIES | TRAJECTORY, TRAJECTORY)
-	- This overloaded function is internal and returns TRUE if the bounding box's hulls of both
-	  TIMESERIES or both TRAJECTORY intersects, AND the periods of observations of both
-	  TIMESERIES or both TRAJECTORY intersects; otherwise returns FALSE.
-	  Note that that this function isn't saying that both space-time objects actually intersects.
-	  It only tells us if both arguments objects are good candidates to.
+  _TST_INTERSECTS(TIMESERIES, TIMESERIES | TRAJECTORY, TRAJECTORY)
+  - This overloaded function is internal and returns TRUE if the bounding box's hulls of both
+    TIMESERIES or both TRAJECTORY intersects, AND the periods of observations of both
+    TIMESERIES or both TRAJECTORY intersects; otherwise returns FALSE.
+    Note that that this function isn't saying that both space-time objects actually intersects.
+    It only tells us if both arguments objects are good candidates to.
 */
 --DROP FUNCTION _TST_INTERSECTS(TIMESERIES);
 CREATE OR REPLACE FUNCTION _tst_intersects(TIMESERIES, TIMESERIES)
@@ -326,9 +320,9 @@ LANGUAGE SQL;
 
 /*
 FUNCTION:
-	TST_TIMESERIES_INTERPOLATION(TIMESTAMP, TIMESERIES_ELEM[])
-	TST_TRAJECTORY_INTERPOLATION(TIMESTAMP, TRAJECTORY_ELEM[])
-	- Interpolation method function for 2D space.
+  TST_TIMESERIES_INTERPOLATION(TIMESTAMP, TIMESERIES_ELEM[])
+  TST_TRAJECTORY_INTERPOLATION(TIMESTAMP, TRAJECTORY_ELEM[])
+  - Interpolation method function for 2D space.
 */
 
 --DROP FUNCTION TST_TIMESERIES_INTERPOLATION(TIMESTAMP, TIMESERIES_ELEM[]);
@@ -399,7 +393,10 @@ BEGIN
       SELECT INTO time_interval1 EXTRACT(epoch FROM $1 - (($2)[middle_l]).time);
       IF (time_interval0 != 0) THEN
         RETURN st_setSRID(st_point(st_x((($2)[middle_l]).geom) + (st_x((($2)[middle_u]).geom) - st_x((($2)[middle_l]).geom)) * time_interval1 / time_interval0,
-          st_y((($2)[middle_l]).geom) + (st_y((($2)[middle_u]).geom) - st_y((($2)[middle_l]).geom)) * time_interval1 / time_interval0), st_SRID((($2)[middle_l]).geom));
+                                   st_y((($2)[middle_l]).geom) + (st_y((($2)[middle_u]).geom) - st_y((($2)[middle_l]).geom)) * time_interval1 / time_interval0
+                          ),
+                          st_SRID((($2)[middle_l]).geom)
+               );
       ELSE
         RAISE warning '%', time_interval0;
         RETURN NULL; 
@@ -413,17 +410,17 @@ LANGUAGE PLPGSQL;
 
 /*
 FUNCTION:
-	TST_LINEAR_RESAMPLING(TIMESERIES, INTEGER)
-	- This functions resamples the TIMESERIES or TRAJECTORY data values/locations in 
-	  N differents points in time domain. Any new value is interpolated from actual data.
-	Example:
-		SELECT TST_LINEAR_RESAMPLING(timeseries, 4)
-		FROM buoy_obs_ts
-		WHERE buoy_id = 4;
+  TST_LINEAR_RESAMPLING(TIMESERIES, INTEGER)
+  - This functions resamples the TIMESERIES or TRAJECTORY data values/locations in 
+    N differents points in time domain. Any new value is interpolated from actual data.
+  Example:
+    SELECT TST_LINEAR_RESAMPLING(timeseries, 4)
+    FROM buoy_obs_ts
+    WHERE buoy_id = 4;
 
-		SELECT TST_LINEAR_RESAMPLING(trajectory, 4)
-		FROM buoy_obs_tj
-		WHERE buoy_id = 4;
+    SELECT TST_LINEAR_RESAMPLING(trajectory, 4)
+    FROM buoy_obs_tj
+    WHERE buoy_id = 4;
 */
 
 --DROP FUNCTION TST_LINEAR_RESAMPLING(TIMESERIES, NUMERIC);

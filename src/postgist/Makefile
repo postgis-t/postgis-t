@@ -1,11 +1,12 @@
-# The extension name: postgist
+# Spatial-Temporal Geographic Objects
 EXTENSION = postgist
 
-# Files that will be installed under prefix/share/geoext        
-DATA = postgist--0.03.26.sql  # the script used to install the extension
+# Files that will be installed under prefix/share/postgist
+DATA = postgist--0.1.0.sql
 
 # Build based on pg_config framework
 PG_CONFIG = pg_config
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
+
 include $(PGXS)
