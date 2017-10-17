@@ -1,4 +1,6 @@
 import numpy as np
+from shapely.geometry import Point, GeometryCollection, MultiPoint, Polygon, LineString
+from shapely.wkt import dumps, loads
 
 class traj_py:
     def __init__(self, x, y, t, unit = "D"):
@@ -40,20 +42,67 @@ class traj_py:
         except KeyError:
             # interpolate?
             pass
-    
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
+    def begins(self):
+        return self.t[0]
+
+    def ends(self):
+        return self.t[-1]
+
     def after(self, t):
         t = np.datetime64(t, unit = self.unit)
         mask = self.t > t
         result = traj_py(self.x[mask], self.y[mask], self.t[mask])
         return result
 
+    def before(self, t):
+        t = np.datetime64(t, unit = self.unit)
+        mask = self.t < t
+        result = traj_py(self.x[mask], self.y[mask], self.t[mask])
+        return result
 
-traj = traj_py([1,2,3], 
-               [3,2,1], 
-               ["2000-01-01","2000-02-01","2000-03-01"])
+    def during(self, t1, t2):
+        t1 = np.datetime64(t1, unit = self.unit)
+        t2 = np.datetime64(t2, unit = self.unit)
+        mask = ((self.t > t1) & (self.t < t2))
+        result = traj_py(self.x[mask], self.y[mask], self.t[mask])
+        return result
+
+    def intersection(self, geom):
+        traj =  LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+        return traj.intersection(geom)
+
+    def difference(self, geom):
+        traj =  LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+        return traj.difference(geom)
+
+    def difference(self, geom):
+        traj =  LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+        return traj.difference(geom)
+
+    def boundary(self):
+        traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+        return traj.bounds
+
+
+
+traj = traj_py([1,2,3,5],
+               [0,2,2,4],
+               ["2000-01-01","2000-02-01","2000-03-01", "2000-04-01", "2000-05-01"])
 
 traj["2000-02-01"]
 # (2.0, 2.0)
 
-traj.after("2000-01-01")
+
+polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
+
+print(traj.boundary())
+
+
 
