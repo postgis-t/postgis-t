@@ -58,7 +58,7 @@ spatiotemporal_make(PG_FUNCTION_ARGS)
 
   index = (int)(t - str);
 
-  time = malloc(index + 1);
+  time = malloc(sizeof(char) * (index + 1));
 
   memcpy(time, str, index);
 

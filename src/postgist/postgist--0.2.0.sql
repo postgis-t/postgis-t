@@ -9,5 +9,5 @@
 
 CREATE OR REPLACE FUNCTION spatiotemporal_make(cstring)
 	RETURNS timestamp
-    AS 'MODULE_PATHNAME', 'spatiotemporal_make'
-    LANGUAGE C IMMUTABLE STRICT;
+	AS 'MODULE_PATHNAME', 'spatiotemporal_make'
+	LANGUAGE C IMMUTABLE STRICT;
