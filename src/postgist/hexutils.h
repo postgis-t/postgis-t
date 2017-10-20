@@ -1,28 +1,26 @@
 /*
   Copyright (C) 2017 National Institute For Space Research (INPE) - Brazil.
 
-  This file is part of pg_geoext, a simple PostgreSQL extension for 
-  for teaching spatial database classes.
-
-  pg_geoext is free software: you can redistribute it and/or modify
+  postgis-t is free software: you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License version 3 as
   published by the Free Software Foundation.
 
-  pg_geoext is distributed  "AS-IS" in the hope that it will be useful,
+  postgis-t is distributed  "AS-IS" in the hope that it will be useful,
   but WITHOUT ANY WARRANTY OF ANY KIND; without even the implied warranty
   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with pg_geoext. See LICENSE. If not, write to
+  along with postgis-t. See LICENSE. If not, write to
   Gilberto Ribeiro de Queiroz at <gribeiro@dpi.inpe.br>.
+
  */
 
 /*!
  *
- * \file geoext/hexutils.h
+ * \file  postgist/hexutils.h
  *
- * \brief Hex-utilities for GeoExt.
+ * \brief Hex-utilities for postgist.
  *
  * \author Gilberto Ribeiro de Queiroz
  * \author Fabiana Zioti
@@ -33,8 +31,8 @@
  *
  */
 
-#ifndef __GEOEXT_HEXUTILS_H__
-#define __GEOEXT_HEXUTILS_H__
+#ifndef __POSTGIST_HEXUTILS_H__
+#define __POSTGIST_HEXUTILS_H__
 
 
 /*
@@ -56,4 +54,4 @@ void binary2hex(const char *byte_str, int size, char *hex_str);
  */
 void hex2binary(const char *hex_str, int h_size, char *byte_str);
 
-#endif  /* __GEOEXT_HEXUTILS_H__ */
+#endif  /* __POSTGIST_HEXUTILS_H__ */
