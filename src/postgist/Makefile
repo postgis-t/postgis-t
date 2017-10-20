@@ -3,7 +3,7 @@ MODULE_big = postgist
 
 # As our extension uses multiple files, we have to
 # set OBJS
-OBJS = postgist.o spatiotemporal.o
+OBJS = postgist.o spatiotemporal.o wkt.o hexutils.o
 
 # Spatial-Temporal Geographic Objects
 EXTENSION = postgist 

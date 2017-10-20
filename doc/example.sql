@@ -11,4 +11,4 @@ CREATE DATABASE  pg_postgist;
 
 CREATE EXTENSION postgist CASCADE;
 
-SELECT spatiotemporal_make('2015-05-18 10:00:00;');  
+SELECT spatiotemporal_make('ST_TRAJECTORY(2015-05-18 10:00:00;2015-05-18 11:00:00;)');  

@@ -7,7 +7,34 @@
 -- Drop spatiotemporal type if it exists and forward its declaration
 --
 
+
+DROP TYPE IF EXISTS spatiotemporal;
+CREATE TYPE spatiotemporal;
+
+
+--
+-- spatiotemporal Input/Output Functions
+--
+CREATE OR REPLACE FUNCTION spatiotemporal_in(cstring)
+    RETURNS spatiotemporal
+    AS 'MODULE_PATHNAME', 'spatiotemporal_in'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION spatiotemporal_out(spatiotemporal)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'spatiotemporal_out'
+    LANGUAGE C IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION spatiotemporal_make(cstring)
-	RETURNS timestamp
+	RETURNS spatiotemporal
 	AS 'MODULE_PATHNAME', 'spatiotemporal_make'
 	LANGUAGE C IMMUTABLE STRICT;
+
+
+CREATE TYPE spatiotemporal
+(
+    input = spatiotemporal_in,
+    output = spatiotemporal_out,
+    internallength = 16,
+    alignment = double
+);

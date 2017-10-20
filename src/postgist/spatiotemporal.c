@@ -33,10 +33,13 @@
 
 /* PostGIS-T extension */
 #include "spatiotemporal.h"
+#include "wkt.h"
+#include "hexutils.h"
 
 /* PostgreSQL */
 #include <libpq/pqformat.h>
 #include <utils/builtins.h>
+
 
 
 PG_FUNCTION_INFO_V1(spatiotemporal_make);
@@ -47,28 +50,67 @@ spatiotemporal_make(PG_FUNCTION_ARGS)
   /*elog(INFO, "spatiotemporal_make CALL");*/
   char *str = PG_GETARG_CSTRING(0);
 
-  //struct spatiotemporal = (struct spatiotemporal *) palloc(sizeof(struct spatiotemporal));
+  struct spatiotemporal *st = (struct spatiotemporal*) palloc(sizeof(struct spatiotemporal));
 
-  char *time;
+  spatiotemporal_decode(str, st);
 
-  char *t;
-  
-  Timestamp start_time;
+  PG_RETURN_SPATIOTEMPORAL_P(st);
+}
 
-  int index;
 
-  t = strchr(str, ';');
+PG_FUNCTION_INFO_V1(spatiotemporal_in);
 
-  index = (int)(t - str);
+Datum
+spatiotemporal_in(PG_FUNCTION_ARGS){
 
-  time = (char*) palloc(index + 1);
+  char *str = PG_GETARG_CSTRING(0);
 
-  memcpy(time, str, index);
+  char *hstr = str;
 
-  time[index+1] = '\0';
+  struct spatiotemporal *st = (struct spatiotemporal*) palloc(sizeof(struct spatiotemporal));
 
-  start_time = DirectFunctionCall3(timestamp_in, PointerGetDatum(time), PointerGetDatum(1114), PointerGetDatum(-1));
+  Timestamp start_time = 0;
 
-  PG_RETURN_TIMESTAMP(start_time);
-  
+  Timestamp end_time = 0;
+
+  /* get the  and advance the hstr pointer */
+  hex2binary(hstr, 2 * sizeof(Timestamp), (char*)&start_time);
+
+  hstr += 2 * sizeof(Timestamp);
+
+  // time_elem = DirectFunctionCall3(timestamp_in, PointerGetDatum(hstr), PointerGetDatum(1114), PointerGetDatum(-1));
+
+  /* set the field */
+  st->start_time = start_time;
+
+  /* read the coordinates from the hex-string*/
+  hex2binary(hstr, 2 * sizeof(Timestamp), (char*)&end_time);
+
+  /* set the field */
+  st->end_time = end_time;
+
+  PG_RETURN_SPATIOTEMPORAL_P(st);
+
+}
+
+PG_FUNCTION_INFO_V1(spatiotemporal_out);
+
+Datum
+spatiotemporal_out(PG_FUNCTION_ARGS)
+{
+  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+
+  /* alloc a buffer for hex-string plus a trailing '\0' */
+  char *hstr = palloc((2 * sizeof(struct spatiotemporal)) + 1);
+
+  /*elog(NOTICE, "spatiotemporal called");*/
+
+  if (!PointerIsValid(st))
+    ereport(ERROR, (errcode (ERRCODE_INVALID_PARAMETER_VALUE),
+                    errmsg("missing argument for spatiotemporal")));
+
+  binary2hex((char*)st, sizeof(struct spatiotemporal), hstr);
+
+  PG_RETURN_CSTRING(hstr);
+
 }
