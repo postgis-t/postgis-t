@@ -46,11 +46,14 @@ spatiotemporal_make(PG_FUNCTION_ARGS)
 {
   /*elog(INFO, "spatiotemporal_make CALL");*/
   char *str = PG_GETARG_CSTRING(0);
+
+  //struct spatiotemporal = (struct spatiotemporal *) palloc(sizeof(struct spatiotemporal));
+
   char *time;
-  
-  Timestamp start_time;
 
   char *t;
+  
+  Timestamp start_time;
 
   int index;
 
@@ -58,7 +61,7 @@ spatiotemporal_make(PG_FUNCTION_ARGS)
 
   index = (int)(t - str);
 
-  time = malloc(sizeof(char) * (index + 1));
+  time = (char*) palloc(index + 1);
 
   memcpy(time, str, index);
 
