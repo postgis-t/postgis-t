@@ -34,6 +34,9 @@
 /* PostGIS-T extension */
 #include "spatiotemporal.h"
 
+/* PostgreSQL */
+#include <libpq/pqformat.h>
+#include <utils/builtins.h>
 
 
 PG_FUNCTION_INFO_V1(spatiotemporal_make);
@@ -41,5 +44,28 @@ PG_FUNCTION_INFO_V1(spatiotemporal_make);
 Datum
 spatiotemporal_make(PG_FUNCTION_ARGS)
 {
+  /*elog(INFO, "spatiotemporal_make CALL");*/
+  char *str = PG_GETARG_CSTRING(0);
+  char *time;
+  
+  Timestamp start_time;
 
+  char *t;
+
+  int index;
+
+  t = strchr(str, ';');
+
+  index = (int)(t - str);
+
+  time = malloc(index + 1);
+
+  memcpy(time, str, index);
+
+  time[index+1] = '\0';
+
+  start_time = DirectFunctionCall3(timestamp_in, PointerGetDatum(time), PointerGetDatum(1114), PointerGetDatum(-1));
+
+  PG_RETURN_TIMESTAMP(start_time);
+  
 }

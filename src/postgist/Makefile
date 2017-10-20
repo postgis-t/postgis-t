@@ -3,10 +3,10 @@ MODULE_big = postgist
 
 # As our extension uses multiple files, we have to
 # set OBJS
-OBJS = postgist.o 
+OBJS = postgist.o spatiotemporal.o
 
 # Spatial-Temporal Geographic Objects
-EXTENSION = postgist
+EXTENSION = postgist 
 
 # Files that will be installed under prefix/share/postgist
 DATA = postgist--0.2.0.sql
