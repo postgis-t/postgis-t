@@ -53,7 +53,7 @@
 #define ST_WKT_TOKEN "ST_"
 #define ST_WKT_TOKEN_LEN 3
 
-#define TRAJECTORYG_WKT_TOKEN "TRAJECTORY"
+#define TRAJECTORY_WKT_TOKEN "TRAJECTORY"
 #define TRAJECTORY_WKT_TOKEN_LEN 10
 
 #define LDELIM '('
@@ -103,7 +103,7 @@ void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 
 		elog(INFO, "cp %s", cp);
 
-		if(strncasecmp(cp, TRAJECTORYG_WKT_TOKEN, TRAJECTORY_WKT_TOKEN_LEN) == 0)
+		if(strncasecmp(cp, TRAJECTORY_WKT_TOKEN, TRAJECTORY_WKT_TOKEN_LEN) == 0)
 		{
 			cp += TRAJECTORY_WKT_TOKEN_LEN;
 
@@ -138,9 +138,7 @@ void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 				ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("invalid input syntax for type ) not found ")));
-			// /*skip ;*/
-			// ++cp;
-
+		
 		/* skip the ')' */
 			++cp;
 

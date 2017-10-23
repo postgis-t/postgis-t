@@ -31,6 +31,13 @@ CREATE OR REPLACE FUNCTION spatiotemporal_make(cstring)
 	LANGUAGE C IMMUTABLE STRICT;
 
 
+CREATE OR REPLACE FUNCTION to_str(spatiotemporal)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'spatiotemporal_as_text'
+    LANGUAGE C IMMUTABLE STRICT;
+
+
+
 CREATE TYPE spatiotemporal
 (
     input = spatiotemporal_in,

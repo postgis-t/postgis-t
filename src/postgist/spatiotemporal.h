@@ -61,9 +61,9 @@ extern Datum spatiotemporal_make(PG_FUNCTION_ARGS);
 
 extern Datum spatiotemporal_in(PG_FUNCTION_ARGS);
 extern Datum spatiotemporal_out(PG_FUNCTION_ARGS);
-/*extern Datum spatiotemporal_as_text(PG_FUNCTION_ARGS);
-extern Datum spatiotemporal_from_text(PG_FUNCTION_ARGS);
-*/
+extern Datum spatiotemporal_as_text(PG_FUNCTION_ARGS);
+/*extern Datum spatiotemporal_from_text(PG_FUNCTION_ARGS);*/
+
 
 
 

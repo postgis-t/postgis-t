@@ -114,3 +114,39 @@ spatiotemporal_out(PG_FUNCTION_ARGS)
   PG_RETURN_CSTRING(hstr);
 
 }
+
+
+
+PG_FUNCTION_INFO_V1(spatiotemporal_as_text);
+
+Datum
+spatiotemporal_as_text(PG_FUNCTION_ARGS)
+{
+
+  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+
+  StringInfoData str;
+
+  initStringInfo(&str);
+
+  char *start_time;
+
+  char *end_time;
+
+  start_time = DirectFunctionCall1(timestamp_out, st->start_time);
+  end_time = DirectFunctionCall1(timestamp_out, st->end_time);
+
+  appendStringInfoString(&str, start_time);
+
+  appendStringInfoChar(&str, ',');
+
+  appendStringInfoString(&str, end_time);
+
+
+  pfree(start_time);
+  pfree(end_time);
+
+
+  return str.data;
+
+}
