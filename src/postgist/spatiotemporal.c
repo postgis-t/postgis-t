@@ -39,6 +39,7 @@
 /* PostgreSQL */
 #include <libpq/pqformat.h>
 #include <utils/builtins.h>
+#include <utils/rangetypes.h>
 
 
 
@@ -148,5 +149,21 @@ spatiotemporal_as_text(PG_FUNCTION_ARGS)
 
 
   return str.data;
+
+}
+
+
+PG_FUNCTION_INFO_V1(spatiotemporal_duration);
+
+Datum
+spatiotemporal_duration(PG_FUNCTION_ARGS)
+{
+  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+
+  Interval   *result;
+
+  result = DirectFunctionCall2( timestamp_mi, st->end_time, st->start_time);
+
+  PG_RETURN_INTERVAL_P(result);
 
 }

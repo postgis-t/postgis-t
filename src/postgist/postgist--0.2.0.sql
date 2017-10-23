@@ -36,6 +36,10 @@ CREATE OR REPLACE FUNCTION to_str(spatiotemporal)
     AS 'MODULE_PATHNAME', 'spatiotemporal_as_text'
     LANGUAGE C IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION get_duration(spatiotemporal)
+    RETURNS interval
+    AS 'MODULE_PATHNAME', 'spatiotemporal_duration'
+    LANGUAGE C IMMUTABLE STRICT;
 
 
 CREATE TYPE spatiotemporal

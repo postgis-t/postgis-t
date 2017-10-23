@@ -76,9 +76,13 @@ Timestamp timestamp_decode(char **cp){
 
 	time = (char*) palloc(index + 1);
 
-	memcpy(time, *cp, index);
+	memset(time, '\0', index + 1);
 
-	time[index + 1] = '\0';
+  	strncpy(time, *cp, index);
+
+	/*memcpy(time, *cp, index);*/
+
+	//time[index + 1] = '\0';
 
 	*cp += index;
 
