@@ -6,7 +6,7 @@ Ex: mensuare('10-05-2010')
 	or return Geometry('LINESTRING(44 44, 44 44, 44 44)')
 	etc...
 */
-CREATE OR REPLACE FUNCTION mensuare(ts timestamp)
+CREATE OR REPLACE FUNCTION measure(t trajectory, ts timestamp)
 RETURNS geometry AS
 $$
 
@@ -24,7 +24,7 @@ $$
 LANGUAGE plpython3u
 
 /* Retorna a primeira data de uma trajetoria*/
-CREATE OR REPLACE FUNCTION begins()
+CREATE OR REPLACE FUNCTION begins(t trajectory)
 RETURNS timestamp AS
 $$
 
@@ -33,7 +33,7 @@ LANGUAGE plpython3u
 
 
 /* Retorna a ultima data de uma trajetoria*/
-CREATE OR REPLACE FUNCTION ends()
+CREATE OR REPLACE FUNCTION ends(t trajectory)
 RETURNS timestamp AS
 $$
 
@@ -42,10 +42,8 @@ LANGUAGE plpython3u
 
 
 /* Retorna o máximo e o minimo de X e Y
-Ex de select: 
-	select boundary(ARRAY[1.1,8.8]::float[], ARRAY[1.1,8.8]::float[])
 */
-CREATE OR REPLACE FUNCTION boundary(x float[], y float[])
+CREATE OR REPLACE FUNCTION boundary(t trajectory)
 RETURNS timestamp AS
 $$
 
@@ -56,14 +54,14 @@ LANGUAGE plpython3u
 /* Retorna uma trajetória com todos os pontos que estão depois de uma data
 caso o valor estiver fora do range, a função irá retorna null
 
-t = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
-x = [1,2,3]
-y = [5,4,8]
+traj.time = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
+traj.x = [1,2,3]
+traj.y = [5,4,8]
 
-Ex: select after( x, y, t, '10-05-2014 14:15:18' )
+Ex: select after( traj, '10-05-2014 14:15:18' )
 	return [(2,4),(3,8)]
 */
-CREATE OR REPLACE FUNCTION after(x float[], y float[], t timestamp[], ts timestamp)
+CREATE OR REPLACE FUNCTION after(t trajectory, ts timestamp)
 RETURNS geometry AS
 $$
 
@@ -73,14 +71,14 @@ LANGUAGE plpython3u
 /* Retorna uma trajetória com todos os pontos que estão antes de uma data
 caso o valor estiver fora do range, a função irá retorna null
 
-t = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
-x = [1,2,3]
-y = [5,4,8]
+traj.time = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
+traj.x = [1,2,3]
+traj.y = [5,4,8]
 
-Ex: select after( x, y, t, '10-05-2014 14:15:20' )
+Ex: select after(  traj, '10-05-2014 14:15:20' )
 	return [(1,5),(2,4)]
 */
-CREATE OR REPLACE FUNCTION before(x float[], y float[], t timestamp[],ts timestamp)
+CREATE OR REPLACE FUNCTION before(t trajectory,ts timestamp)
 RETURNS geometry AS
 $$
 	print('')
@@ -90,14 +88,14 @@ LANGUAGE plpython3u
 /* Retorna uma trajetória com todos os pontos que esteja entre duas data
 caso o valor estiver fora do range, a função irá retorna null
 
-t = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
-x = [1,2,3]
-y = [5,4,8]
+traj.time = ['10-05-2014 14:15:18','10-05-2014 14:15:19','10-05-2014 14:15:20']
+traj.x = [1,2,3]
+traj.y = [5,4,8]
 
-Ex: select after( x, y, t,'10-05-2014 14:15:18' , '10-05-2014 14:15:20' )
+Ex: select after(  traj, '10-05-2014 14:15:18' , '10-05-2014 14:15:20' )
 	return [(1,5),(2,4)]
 */
-CREATE OR REPLACE FUNCTION during(x float[], y float[], t timestamp[],ts1 timestamp, ts2 timestamp)
+CREATE OR REPLACE FUNCTION during(t trajectory,ts1 timestamp, ts2 timestamp)
 RETURNS geometry AS
 $$
 	print('')
@@ -138,7 +136,7 @@ Ex:
 		|___________________________________________|
 		
 */
-CREATE OR REPLACE FUNCTION intersection(x float[], y float[], t timestamp[], g geometry) 
+CREATE OR REPLACE FUNCTION intersection(t trajectory, g geometry) 
 RETURNS geometry AS
 $$
 	print('')
@@ -179,7 +177,7 @@ Primeiro Array	|    _____|			    	    |
 		|___________________________________________|
 		
 */
-CREATE OR REPLACE FUNCTION difference(x float[], y float[], t timestamp[], g geometry) 
+CREATE OR REPLACE FUNCTION difference(t trajectory, g geometry) 
 RETURNS geometry AS
 $$
 	print('')
