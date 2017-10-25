@@ -67,6 +67,8 @@ extern Datum spatiotemporal_as_text(PG_FUNCTION_ARGS);
 
 
 extern Datum spatiotemporal_duration(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_get_start_time(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_get_end_time(PG_FUNCTION_ARGS);
 
 
 

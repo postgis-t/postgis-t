@@ -123,19 +123,18 @@ PG_FUNCTION_INFO_V1(spatiotemporal_as_text);
 Datum
 spatiotemporal_as_text(PG_FUNCTION_ARGS)
 {
-
   struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
-
-  StringInfoData str;
-
-  initStringInfo(&str);
 
   char *start_time;
 
   char *end_time;
 
-  start_time = DirectFunctionCall1(timestamp_out, st->start_time);
-  end_time = DirectFunctionCall1(timestamp_out, st->end_time);
+  StringInfoData str;
+
+  initStringInfo(&str);
+
+  start_time = DatumGetCString(DirectFunctionCall1(timestamp_out, st->start_time));
+  end_time = DatumGetCString(DirectFunctionCall1(timestamp_out, st->end_time));
 
   appendStringInfoString(&str, start_time);
 
@@ -143,12 +142,10 @@ spatiotemporal_as_text(PG_FUNCTION_ARGS)
 
   appendStringInfoString(&str, end_time);
 
-
   pfree(start_time);
   pfree(end_time);
 
-
-  return str.data;
+  PG_RETURN_CSTRING(str.data);
 
 }
 
@@ -160,9 +157,7 @@ spatiotemporal_duration(PG_FUNCTION_ARGS)
 {
   struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
 
-  Interval   *result;
-
-  result = DirectFunctionCall2( timestamp_mi, st->end_time, st->start_time);
+  Interval *result = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi, st->end_time, st->start_time));
 
   PG_RETURN_INTERVAL_P(result);
 
@@ -172,19 +167,19 @@ spatiotemporal_duration(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(spatiotemporal_get_start_time);
 
 Datum
-spatiotemporal_get_start_time
+spatiotemporal_get_start_time(PG_FUNCTION_ARGS)
 {
-  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+ struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
 
-  PG_RETURN_TIMESTAMP(st->start_time);
+ PG_RETURN_TIMESTAMP(st->start_time);
 }
 
 PG_FUNCTION_INFO_V1(spatiotemporal_get_end_time);
 
 Datum
-spatiotemporal_get_end_time
+spatiotemporal_get_end_time(PG_FUNCTION_ARGS)
 {
-  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+ struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
 
-  PG_RETURN_TIMESTAMP(st->end_time);
+ PG_RETURN_TIMESTAMP(st->end_time);
 }

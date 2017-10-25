@@ -41,6 +41,15 @@ CREATE OR REPLACE FUNCTION get_duration(spatiotemporal)
     AS 'MODULE_PATHNAME', 'spatiotemporal_duration'
     LANGUAGE C IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION get_start_time(spatiotemporal)
+    RETURNS timestamp
+    AS 'MODULE_PATHNAME', 'spatiotemporal_get_start_time'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION get_end_time(spatiotemporal)
+    RETURNS timestamp
+    AS 'MODULE_PATHNAME', 'spatiotemporal_get_end_time'
+    LANGUAGE C IMMUTABLE STRICT;
 
 CREATE TYPE spatiotemporal
 (
