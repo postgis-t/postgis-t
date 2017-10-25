@@ -167,3 +167,24 @@ spatiotemporal_duration(PG_FUNCTION_ARGS)
   PG_RETURN_INTERVAL_P(result);
 
 }
+
+
+PG_FUNCTION_INFO_V1(spatiotemporal_get_start_time);
+
+Datum
+spatiotemporal_get_start_time
+{
+  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+
+  PG_RETURN_TIMESTAMP(st->start_time);
+}
+
+PG_FUNCTION_INFO_V1(spatiotemporal_get_end_time);
+
+Datum
+spatiotemporal_get_end_time
+{
+  struct spatiotemporal *st = PG_GETARG_SPATIOTEMPORAL_P(0);
+
+  PG_RETURN_TIMESTAMP(st->end_time);
+}
