@@ -48,7 +48,7 @@
 #include <string.h>
 
 /*
- * WKT delimiters for input/output 
+ * WKT delimiters for input/output
  */
 #define ST_WKT_TOKEN "ST_"
 #define ST_WKT_TOKEN_LEN 3
@@ -61,14 +61,14 @@
 #define COLLECTION_DELIM ';'
 
 
-inline 
-Timestamp timestamp_decode(char **cp){
-
+inline
+Timestamp timestamp_decode(char **cp)
+{
 	char *time;
 
-  	char *t;
+	char *t;
 
-  	int index;
+	int index;
 
 	t = strchr(*cp, ';');
 
@@ -78,7 +78,7 @@ Timestamp timestamp_decode(char **cp){
 
 	memset(time, '\0', index + 1);
 
-  	strncpy(time, *cp, index);
+	strncpy(time, *cp, index);
 
 	/*memcpy(time, *cp, index);*/
 
@@ -86,18 +86,18 @@ Timestamp timestamp_decode(char **cp){
 
 	*cp += index;
 
-	return DirectFunctionCall3(timestamp_in, PointerGetDatum(time), PointerGetDatum(1114), PointerGetDatum(-1));
+	return DatumGetTimestamp(DirectFunctionCall3(timestamp_in, PointerGetDatum(time), PointerGetDatum(1114), PointerGetDatum(-1)));
 
 }
 
 void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 {
 	char *cp = str;
-	
-  	Timestamp start_time = 0;
 
-  	Timestamp end_time = 0;
-  	
+	Timestamp start_time = 0;
+
+	Timestamp end_time = 0;
+
 	while(isspace(*cp))
 		cp++;
 
@@ -126,7 +126,7 @@ void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 				++cp;
 
 			start_time = timestamp_decode(&cp);
-			
+
 			/*skip ;*/
 			++cp;
 
@@ -142,7 +142,7 @@ void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 				ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("invalid input syntax for type ) not found ")));
-		
+
 		/* skip the ')' */
 			++cp;
 
@@ -169,5 +169,5 @@ void spatiotemporal_decode(char *str, struct spatiotemporal *st)
 		ereport(ERROR,
 			(errmsg("Invalide input for SPATIOTEMPORAL type")));
 
-	
+
 }
