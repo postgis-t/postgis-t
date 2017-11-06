@@ -1,20 +1,25 @@
-import datetime
+import datetime as dt
+
 import numpy as np
-from shapely.geometry import Polygon, asLineString, MultiPoint
+from shapely.geometry import Polygon, LineString, MultiLineString
+from scipy import interpolate
+
 
 
 class Trajectory:
 
-    def __init__(self, x, y, t, unit='D'):
-        self.unit = unit
+    def __init__(self, x, y, t):
+        self.unit = 's'
         self.x = np.array(x, dtype='f8')
         self.y = np.array(y, dtype='f8')
-        self.t = np.array(t, dtype='datetime64[{}]'.format(unit))
+        self.t = np.array(t, dtype='datetime64[{}]'.format(self.unit))
+        seconds = []
 
-        # dt = np.dtype([('x','f8'),('y','f8'),('t','datetime64[{}]'.format(unit))])
-        # #,('t','datetime64[{}]'.format(unit))
-        # self.all = np.array(list(zip(self.x,self.y,self.t)), dtype=dt)
+        for time in self.t:
+            timedelta =  time.item() - dt.datetime.min
+            seconds.append(timedelta.total_seconds())
 
+        self.seconds = np.array(seconds, dtype='f8')
         self._t = {str(v): i for i, v in enumerate(t)}
 
     def __getitem__(self, t):
@@ -65,59 +70,50 @@ class Trajectory:
     def after(self, t):
         t = np.datetime64(t, unit=self.unit)
         mask = self.t > t
-        result = traj_py(self.x[mask], self.y[mask], self.t[mask])
+        result = Trajectory(self.x[mask], self.y[mask], self.t[mask])
         return result
 
     def before(self, t):
         t = np.datetime64(t, unit=self.unit)
         mask = self.t < t
-        result = traj_py(self.x[mask], self.y[mask], self.t[mask])
+        result = Trajectory(self.x[mask], self.y[mask], self.t[mask])
         return result
 
     def during(self, t1, t2):
         t1 = np.datetime64(t1, unit=self.unit)
         t2 = np.datetime64(t2, unit=self.unit)
         mask = ((self.t > t1) & (self.t < t2))
-        result = traj_py(self.x[mask], self.y[mask], self.t[mask])
+        result = Trajectory(self.x[mask], self.y[mask], self.t[mask])
         return result
 
-    def intersection(self, geom, startTime, endTime):
+    def intersection(self, geom):
 
-        time = np.array([startTime, endTime], dtype='datetime64[{}]'.format('D'))
+        traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis],self.seconds[:, np.newaxis])))
+        inter = traj.intersection(geom)
 
-        traj = MultiPoint(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
-        cont = 0
+        xy = inter.coords.xy
+        timestamp = []
+                                #[1:-1]
+        for coord in inter.coords:
+            d = dt.timedelta(seconds=coord[2])
+            rt = d + dt.datetime.min
+            timestamp.append(rt)
 
-        trajF = []
+        interpolator = interpolate.CloughTocher2DInterpolator(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])), self.seconds)
 
-        for point in traj:
-            ref = geom.intersection(point)
-            if ref.is_empty == False and time[0] <= self.t[cont] <= time[1]:
-                trajF.append(ref)
+        timestamp[0] =  dt.timedelta(seconds=float(interpolator(xy[0][0],xy[1][0]))) + dt.datetime.min
+        timestamp[timestamp.__len__()-1] = dt.timedelta(seconds=float(interpolator(xy[0][xy[0].__len__()-1], xy[1][xy[1].__len__() - 1]))) + dt.datetime.min
 
-        return MultiPoint(trajF)
+        return Trajectory(xy[0],xy[1],timestamp)
+
 
     def difference(self, geom):
-        traj = asLineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+        traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
         return traj.difference(geom)
+    #
+    # def boundary(self):
+    #     traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
+    #     return traj.bounds
 
-    def boundary(self):
-        traj = asLineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
-        return traj.bounds
 
-
-traj = traj_py([1, 2, 3, 5],
-               [0, 2, 2, 4],
-               ["2000-01-01", "2000-02-01", "2000-03-01", "2000-04-01", "2000-05-01"])
-
-traj["2000-02-01"]
-# (2.0, 2.0)
-#
-# #
-polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
-
-timeS = datetime.datetime(2000, 1, 1, 15, 14, 12)
-timeE = datetime.datetime(2000, 4, 1, 15, 14, 12)
-
-print(traj.intersection(polygon, timeS, timeE))
 
