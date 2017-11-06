@@ -9,7 +9,6 @@ CREATE DATABASE  pg_postgist;
 
 \c  pg_postgist
 
-CREATE EXTENSION postgis;
+CREATE EXTENSION postgist CASCADE;
 
-CREATE EXTENSION postgist;
-
+SELECT spatiotemporal_make('ST_TRAJECTORY(2015-05-18 10:00:00;2015-05-18 11:00:00;)');  

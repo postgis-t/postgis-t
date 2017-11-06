@@ -41,13 +41,15 @@
 
 struct spatiotemporal
 {
-	int32 vl_len_;        /* Varlena header  */
+	/*int32 vl_len_;        Varlena header  */
 	Timestamp start_time;
 	Timestamp end_time;
-	uint8_t data[1]; 
+	/*uint8_t data[1]; */
 };
 
-#define DatumGetSpatioTemporal(X)      ((struct spatiotemporal*) PG_DETOAST_DATUM(X))
+
+/*#define DatumGetSpatioTemporal(X)      ((struct spatiotemporal*) PG_DETOAST_DATUM(X))*/
+#define DatumGetSpatioTemporal(X)      ((struct spatiotemporal*) DatumGetPointer(X))
 #define PG_GETARG_SPATIOTEMPORAL_P(n)  DatumGetSpatioTemporal(PG_GETARG_DATUM(n))
 #define PG_RETURN_SPATIOTEMPORAL_P(x)  PG_RETURN_POINTER(x)
 
@@ -57,10 +59,16 @@ extern Datum spatiotemporal_make(PG_FUNCTION_ARGS);
 
 /*input and output functions*/
 
-// extern Datum spatiotemporal_in(PG_FUNCTION_ARGS);
-// extern Datum spatiotemporal_out(PG_FUNCTION_ARGS);
-// extern Datum spatiotemporal_as_text(PG_FUNCTION_ARGS);
-// extern Datum spatiotemporal_from_text(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_in(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_out(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_as_text(PG_FUNCTION_ARGS);
+/*extern Datum spatiotemporal_from_text(PG_FUNCTION_ARGS);*/
+
+
+
+extern Datum spatiotemporal_duration(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_get_start_time(PG_FUNCTION_ARGS);
+extern Datum spatiotemporal_get_end_time(PG_FUNCTION_ARGS);
 
 
 
