@@ -1,3 +1,22 @@
+import os, re
+
+import array
+
+path = os.environ['PATH'].split(';')
+
+
+def is_problem(folder):
+    try:
+        for item in os.listdir(folder):
+            if re.match(r'msvcr\d\d\.dll', item):
+                return True
+    except:
+        pass
+    return False
+
+
+path = [folder for folder in path if not is_problem(folder)]
+os.environ['PATH'] = ';'.join(path)
 import datetime as dt
 
 import numpy as np
@@ -18,9 +37,7 @@ class Trajectory:
 
         self.seconds = (self.t - np.datetime64("1970-01-01 00:00:00")) / np.timedelta64(1, 's')
 
-
         if interpolator == 1:
-            #print(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
             self.interpolator = interpolate.LinearNDInterpolator(
                 np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])), self.seconds)
 
@@ -39,7 +56,8 @@ class Trajectory:
 
         elif interpolator == 5:
             self.interpolator = interpolate.griddata(
-                np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])), self.seconds, (self.x, self.y), method='linear')
+                np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])), self.seconds, (self.x, self.y),
+                method='linear')
 
         else:
             raise Exception('Valor para o interpolador é inválido')
@@ -63,7 +81,6 @@ class Trajectory:
 
             # t2 = dt.datetime(2000,1,1)
             # # #
-
 
         #        self.t.
         # print(dt.datetime.fromordinal(dt.datetime.today().toordinal()))
@@ -152,52 +169,55 @@ class Trajectory:
 
         if (isinstance(inter, MultiLineString) or isinstance(inter, MultiPolygon)):
             array_traj = []
-
             for multi in inter:
+                print(multi)
                 array_traj.append(self.interpolate_time(multi))
 
             return array_traj
 
         return self.interpolate_time(inter)
 
+    def interpolate_middle_xyt(self,xyt):
 
-    def interpolate_middle_xy(self, xy):
+        # x = xyt[-1][0]+1
+        # y = xyt[-1][1]+1
+        # t = self.interpolator(x, y)
+        # traj_inter = np.array([x, y, t], dtype='f8')
+        # xyt = np.insert(xyt, int(xyt.size/2 -1) , traj_inter, axis=0)
 
-        x = (xy[0][0] + xy[0][1]) / 2
-        y = (xy[1][0] + xy[1][1]) / 2
+        x = (xyt[0][0] + xyt[1][0]) / 2
+        y = (xyt[0][1] + xyt[1][1]) / 2
+        t = (xyt[0][2] + xyt[1][2]) / 2
+        traj_inter = np.array([x, y, t], dtype='f8')
 
-        return np.insert(xy, [1], [[x], [y]], axis=1)
+        r = np.insert(xyt, 1, traj_inter, axis=0)
+        print(r)
+        return r
 
-
-    def interpolate_middle_time(self, timestamp):
-        t = (timestamp[0] + timestamp[1]) / 2
-        return np.insert(timestamp, [1], t)
+        #
+        # print(self.interpolator(0, 0))
+        # traj_inter = np.array([0, 0, 0], dtype='f8')
+        #
+        # return np.insert(xyt, 0, traj_inter, axis=0)
 
 
     def interpolate_time(self, inter):
 
-        xy = inter.coords.xy
-        timestamp = np.array(inter.coords)[:, 2]
+        xy = np.array(inter)
+        xy[0][2] = self.interpolator(xy[0][0], xy[0][1])
+        xy[-1][2] = self.interpolator(xy[-1][0], xy[-1][1])
 
+        if xy.size <= 6:
+            xy = self.interpolate_middle_xyt(xy)
 
-        if(np.shape(xy)[1] <= 2):
-            print(xy)
-            xy = self.interpolate_middle_xy(xy)
-            print(xy)
-            timestamp = self.interpolate_middle_time(timestamp)
-
-
+        timestamp = xy[:, 2]
         timestamp = timestamp * np.timedelta64(1, 's') + np.datetime64("1970-01-01 00:00:00")
-
-        timestamp[0] = self.interpolator(xy[0][0], xy[1][0]) * np.timedelta64(1, 's') + np.datetime64(
-            "1970-01-01 00:00")
-        timestamp[-1] = self.interpolator(xy[0][-1], xy[1][-1]) * np.timedelta64(1, 's') + np.datetime64(
-            "1970-01-01 00:00")
-
-        #print(xy)
-        #print(timestamp)
-
-        return Trajectory(xy[0], xy[1], timestamp)
+         #
+         # * np.timedelta64(1, 's') + np.datetime64(
+         #    "1970-01-01 00:00")
+         # * np.timedelta64(1, 's') + np.datetime64(
+         #    "1970-01-01 00:00")
+        return Trajectory(xy[:,0], xy[:,1], timestamp)
 
     def difference(self, geom):
         traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
@@ -235,7 +255,6 @@ traj = Trajectory([1, 2, 2, 3, 3, 4, 5, 5, 3, 3],
 polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
 
 print(traj.intersection(polygon))
-
 # x = np.array([4, 6], dtype='f8')
 # y = np.array([4, 7], dtype='f8')
 # t = np.array([ 9.55843260e+08 ,  9.57139260e+08,  9.57139260e+09], dtype='f8')
@@ -294,5 +313,4 @@ print(traj.intersection(polygon))
 
 
 
-#print(np.meshgrid(x,y,t))
-
+# print(np.meshgrid(x,y,t))
