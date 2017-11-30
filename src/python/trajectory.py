@@ -1,6 +1,3 @@
-
-import datetime as dt
-
 import numpy as np
 from geojson.geometry import MultiPolygon
 from shapely.geometry import Polygon, LineString, MultiLineString
@@ -14,10 +11,9 @@ class Trajectory:
         self.x = np.array(x, dtype='f8')
         self.y = np.array(y, dtype='f8')
         self.t = np.array(t, dtype='M8[s]'.format(self.unit))
-
         self.seconds = (self.t - np.datetime64("1970-01-01 00:00:00")) / np.timedelta64(1, 's')
-        self._t = {str(v): i for i, v in enumerate(t)}
 
+        self._t = {str(v): i for i, v in enumerate(t)}
 
     def __getitem__(self, t):
         t = np.datetime64(t, unit=self.unit)
@@ -58,6 +54,9 @@ class Trajectory:
     def getY(self):
         return self.y
 
+    def getTime(self):
+        return self.seconds
+
     def begins(self):
         return self.t[0]
 
@@ -83,56 +82,50 @@ class Trajectory:
         result = Trajectory(self.x[mask], self.y[mask], self.t[mask])
         return result
 
-    def intersection(self, geom):
-
+    def intersection_shapely(self,geom):
         traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis], self.seconds[:, np.newaxis])))
-        inter = traj.intersection(geom)
+        return traj.intersection(geom)
+
+    def to_Trajectory(self, inter):
 
         if isinstance(inter, MultiLineString) or isinstance(inter, MultiPolygon):
             array_traj = []
             for multi in inter:
-                array_traj.append(self.interpolate_time(multi))
+                array_traj.append(self.__set_data__(multi))
 
             return array_traj
 
-        return self.interpolate_time(inter)
+        return self.__set_data__(inter)
 
     def interpolate_middle_xyt(self,xyt):
 
-        x = ((xyt[0][0] + xyt[1][0]) / 2) / 1e5
-        y = ((xyt[0][1] + xyt[1][1]) / 2) / 1e5
-        t = (xyt[0][2] + xyt[1][2]) / 2 + 30
-
+        x = (xyt[0][0] + xyt[1][0]) / 2
+        y = (xyt[0][1] + xyt[1][1]) / 2
+        t = (xyt[0][2] + xyt[1][2]) / 2
         traj_inter = np.array([x, y, t], dtype='f8')
 
-        return np.insert(xyt, 1, traj_inter, axis=0)
+        return  np.insert(xyt, 1, traj_inter, axis=0)
 
 
-    def define_interpolator(self, xyt):
-        return interpolate.LinearNDInterpolator(xyt[:, :2], xyt[:, 2])
-
-    def interpolate_time(self, inter):
+    def __set_data__(self, inter):
 
         xy = np.array(inter)
 
-        ##bug
-        if xy.size <= 6:
-            xy = self.interpolate_middle_xyt(xy)
+        # xy[0][2] = self.interpolator(xy[0][0], xy[0][1])
+        #
+        # xy[-1][2] = self.interpolator(xy[-1][0], xy[-1][1])
 
-        interpolator = self.define_interpolator(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis], self.seconds[:, np.newaxis])))
+        # if (xy.size <= 6):
+        #     xy = self.interpolate_middle_xyt(xy)
 
-        xy[0][2] = interpolator(xy[0][0], xy[0][1])
-        xy[-1][2] = interpolator(xy[-1][0], xy[-1][1])
+        timestamp = xy[:, 2] * np.timedelta64(1, 's') + np.datetime64("1970-01-01 00:00:00")
 
-        xy[:, 2] = xy[:, 2] * np.timedelta64(1, 's') + np.datetime64("1970-01-01 00:00:00")
-
-        return Trajectory(xy[:,0], xy[:,1], xy[:, 2])
+        return Trajectory(xy[:,0], xy[:,1], timestamp)
 
 
     def difference(self, geom):
         traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
         return traj.difference(geom)
-
 
         # def boundary(self):
         #     traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])))
