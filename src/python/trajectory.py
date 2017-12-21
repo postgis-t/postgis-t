@@ -1,5 +1,6 @@
 import numpy as np
-from shapely.geometry import LineString, MultiLineString, MultiPolygon
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon, Point
+
 
 class Trajectory:
     def __init__(self, x, y, t):
@@ -14,7 +15,7 @@ class Trajectory:
         self.unit = 's'
         self.x = np.array(x, dtype='f8')
         self.y = np.array(y, dtype='f8')
-        self.t = np.array(t, dtype='datetime64[s]')
+        self.t = np.array(t, dtype='datetime64[{}]'.format(self.unit))
         self.seconds = (self.t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, 's')
 
         self._t = {str(v): i for i, v in enumerate(t)}
@@ -140,6 +141,82 @@ class Trajectory:
 
         return self.__set_data__(inter)
 
+    def intersecs(self, poly):
+
+        none = None
+        cont = 0
+
+        trajectory = np.empty(shape=(0))
+
+        for x,y in np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])):
+            point = Point(x,y)
+            haveIntersection = poly.intersects(point)
+
+            if(haveIntersection != none and cont > 0):
+                none = haveIntersection
+
+                xy = np.array([self.x[cont-1],self.y[cont-1]])
+
+                timeBefore = self.seconds[cont-1]
+                timeCurrent = self.seconds[cont]
+
+                pointBefore = Point(xy)
+
+                line = LineString([pointBefore,point])
+                result = line.intersection(poly)
+
+                intersection = np.array(result)
+
+
+                if (np.all(intersection[0] == pointBefore,axis=0)):
+                    time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[1],
+                                                       np.array(point))
+
+                    before = self.__to_Timestamp__(timeBefore)
+                    current = self.__to_Timestamp__(time)
+
+                else:
+                    time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[0],
+                                                       np.array(point))
+                    before = self.__to_Timestamp__(time)
+                    current = self.__to_Timestamp__(timeCurrent)
+
+
+                intersection = np.insert(intersection, 2, before)
+                intersection = np.insert(intersection, 5, current)
+
+                trajectory = np.append(trajectory , intersection)
+
+                pass
+            cont = cont + 1
+        pass
+
+        size = int(trajectory.size / 3)
+        return trajectory.reshape(size, 3)
+
+    def __get_h__(self, xy1, xy2):
+
+        x = (xy2[0] - xy1[0])
+        y = (xy2[1] - xy1[1])
+
+        x = x * x
+        y = y * y
+
+        return np.sqrt((x+y))
+
+
+    def __interpolate_linear__(self,t1, t2, first_xy, second_xy, third_xy):
+
+        h1 = self.__get_h__(first_xy,third_xy)
+        h2 = self.__get_h__(first_xy, second_xy)
+
+        t = t2 - t1
+
+        time = ((t * h2) / h1) + t1
+
+        return time
+
+        pass
 
     def __set_data__(self, inter):
 
@@ -152,3 +229,18 @@ class Trajectory:
     def difference(self, geom):
         traj = LineString(np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis], self.seconds[:, np.newaxis])))
         return traj.difference(geom)
+
+
+traj = Trajectory([1,2,3,5],
+                  [0,2,2,4],
+               ["2000-01-01 00:01:00", "2000-02-01 00:01:00",
+                "2000-03-01 00:01:00","2000-04-01 00:01:00"])
+
+polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
+
+array = traj.intersecs(polygon)
+
+traj2 = Trajectory(array[:  ,0],array[:,1],array[:,2])
+
+print(traj2.t)
+
