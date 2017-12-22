@@ -141,38 +141,34 @@ class Trajectory:
 
         return self.__set_data__(inter)
 
-    # xy = np.array([self.x[cont - 1], self.y[cont - 1]])
-    #
-    # timeBefore = self.seconds[cont - 1]
-    # timeCurrent = self.seconds[cont]
-    #
-    # pointBefore = Point(xy)
-    #
-    # line = LineString([pointBefore, point])
-    # result = line.intersection(poly)
-    #
-    # intersection = np.array(result)
-    #
-    # if (np.all(intersection[0] == pointBefore, axis=0)):
-    #
-    #     time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[1],
-    #                                        np.array(point))
-    #     before = timeBefore
-    #     current = time
-    #
-    # else:
-    #     time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[0],
-    #                                        np.array(point))
-    #     before = time
-    #     current = timeCurrent
-    #
-    # intersection = np.insert(intersection, 2, before)
-    # intersection = np.insert(intersection, 5, current)
-    # trajectory = np.append(trajectory, intersection)
+
+    def __calculate_inter__(self, cont, point, poly, field):
+
+        xy = np.array([self.x[cont - 1], self.y[cont - 1]])
+
+        timeBefore = self.seconds[cont - 1]
+        timeCurrent = self.seconds[cont]
+
+        pointBefore = Point(xy)
+
+        line = LineString([pointBefore, point])
+        result = line.intersection(poly)
+
+        intersection = np.array(result)
 
 
+        if (intersection.size == 2):
+            inter = intersection
+        else:
+            inter = intersection[field]
 
-    def intersecs_beta(self, poly):
+        time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore),
+                                           inter, np.array(point))
+        return np.insert(inter, 2, time)
+        pass
+
+
+    def intersecs(self, poly):
 
         beforeIntersection = None
         cont = 0
@@ -180,139 +176,37 @@ class Trajectory:
         trajectory = np.empty(shape=(0))
 
         for x, y in np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])):
+
             point = Point(x, y)
             haveIntersection = poly.intersects(point)
 
             if (haveIntersection):
 
                 if (haveIntersection !=  beforeIntersection):
-                    xy = np.array([self.x[cont - 1], self.y[cont - 1]])
 
-                    timeBefore = self.seconds[cont - 1]
-                    timeCurrent = self.seconds[cont]
-
-                    pointBefore = Point(xy)
-
-                    line = LineString([pointBefore, point])
-                    result = line.intersection(poly)
-
-                    intersection = np.array(result)
-
-                    # if (np.all(intersection[0] == pointBefore, axis=0)):
-                    #
-                    #     time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore),
-                    #                                        intersection[1],
-                    #                                        np.array(point))
-                    #     # before = timeBefore
-                    #     # current = time
-                    #     print("a")
-                    #     intersection = np.insert(intersection[1], 2, time)
-                    #
-                    # else:
-                    time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore),
-                                                           intersection[0], np.array(point))
-                    intersection = np.insert(intersection[0], 2, time)
-                    trajectory = np.append(trajectory , intersection)
-                    pass
-
+                    result = self.__calculate_inter__(cont, point, poly, 0)
+                    trajectory = np.append(trajectory, result)
+                pass
 
                 p = np.array(point)
                 trajectory = np.append(trajectory, np.insert(p, 2, self.seconds[cont]))
                 beforeIntersection = haveIntersection
 
-
             elif (haveIntersection !=  beforeIntersection and cont > 0):
 
-                xy = np.array([self.x[cont - 1], self.y[cont - 1]])
+                result = self.__calculate_inter__(cont, point, poly, 1)
+                trajectory = np.append(trajectory, result)
+                beforeIntersection = haveIntersection
+            pass
 
-                timeBefore = self.seconds[cont - 1]
-                timeCurrent = self.seconds[cont]
-
-                pointBefore = Point(xy)
-
-                line = LineString([pointBefore, point])
-                result = line.intersection(poly)
-
-                intersection = np.array(result)
-
-                #if (np.all(intersection[0] == pointBefore, axis=0)):
-
-                time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore),
-                                                       intersection[1],np.array(point))
-
-                intersection = np.insert(intersection[1], 2, time)
-
-                # else:
-                #     time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore),
-                #                                        intersection[0],
-                #                                        np.array(point))
-                #     print("a")
-                #     intersection = np.insert(intersection[0], 2, time)
-
-                trajectory = np.append(trajectory , intersection)
-
-                pass
             cont = cont + 1
-        pass
+            pass
 
         size = int(trajectory.size / 3)
         trajectory = trajectory.reshape(size, 3)
 
         return Trajectory(trajectory[:,0],trajectory[:,1],trajectory[:,2])
 
-
-    #
-    # def intersecs(self, poly):
-    #
-    #     none = None
-    #     cont = 0
-    #
-    #     trajectory = np.empty(shape=(0))
-    #
-    #     for x,y in np.column_stack((self.x[:, np.newaxis], self.y[:, np.newaxis])):
-    #         point = Point(x,y)
-    #         haveIntersection = poly.intersects(point)
-    #
-    #         if(haveIntersection != none and cont > 0):
-    #             none = haveIntersection
-    #
-    #             xy = np.array([self.x[cont-1],self.y[cont-1]])
-    #
-    #             timeBefore = self.seconds[cont-1]
-    #             timeCurrent = self.seconds[cont]
-    #
-    #             pointBefore = Point(xy)
-    #
-    #             line = LineString([pointBefore,point])
-    #             result = line.intersection(poly)
-    #
-    #             intersection = np.array(result)
-    #
-    #             if (np.all(intersection[0] == pointBefore,axis=0)):
-    #
-    #                 time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[1],
-    #                                                     np.array(point))
-    #                 before = timeBefore
-    #                 current = time
-    #
-    #             else:
-    #                 time = self.__interpolate_linear__(timeBefore, timeCurrent, np.array(pointBefore), intersection[0],
-    #                                                     np.array(point))
-    #                 before = time
-    #                 current = timeCurrent
-    #
-    #
-    #             intersection = np.insert(intersection, 2, before)
-    #             intersection = np.insert(intersection, 5, current)
-    #             trajectory = np.append(trajectory , intersection)
-    #
-    #             pass
-    #
-    #         cont = cont + 1
-    #     pass
-    #
-    #     size = int(trajectory.size / 3)
-    #     return trajectory.reshape(size, 3)
 
     def __get_h__(self, xy1, xy2):
 
@@ -352,26 +246,24 @@ class Trajectory:
 
 
 
-traj = Trajectory([1,2,3,5],
-                  [0,2,2,4],
-               ["2000-01-01 00:01:00", "2000-02-01 00:01:00",
-                "2000-03-01 00:01:00","2000-04-01 00:01:00"])
-
-traj2 = Trajectory([0,2,0],
-                  [0,2,2],
-               ["2000-01-01 00:01:00", "2000-02-01 00:01:00",
-                "2000-03-01 00:01:00"])
-
-polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
-
-array = traj.intersecs_beta(polygon)
-array2 = traj2.intersecs_beta(polygon)
-
-print(array)
-print(array2)
-
-
-# traj2 = Trajectory(array[:  ,0],array[:,1],array[:,2])
+# traj = Trajectory([1,2,3,5],
+#                   [0,2,2,4],
+#                ["2000-01-01 00:01:00", "2000-02-01 00:01:00",
+#                 "2000-03-01 00:01:00","2000-04-01 00:01:00"])
 #
-# print(traj2.t)
+# traj2 = Trajectory([0,2,0],
+#                   [0,2,2],
+#                ["2000-01-01 00:01:00", "2000-02-01 00:01:00",
+#                 "2000-03-01 00:01:00"])
+
+# traj3 = Trajectory([1, 2, 2, 3, 3, 4, 5, 5, 3, 3],
+#                    [0, 2, 4, 4, 2, 2, 2, 1, 1, 2],
+#            ["2000-01-01 00:01:00", "2000-02-01 00:01:00", "2000-03-01 00:01:00", "2000-04-01 00:01:00"
+#                , "2000-05-01 00:01:00", "2000-06-01 00:01:00", "2000-07-01 00:01:00",
+#             "2000-08-01 00:01:00"
+#                , "2000-09-01 00:01:00", "2000-10-01 00:01:00"])
+
+
+# polygon = Polygon([(1, 1), (1, 3), (4, 3), (4, 1), (1, 1)])
+
 
